@@ -41,7 +41,6 @@ static volatile int spinlock;
 static jmp_buf restore_point;
 static struct profbuf_s *volatile current_codes;
 
-
 void vmprof_ignore_signals(int ignored)
 {
     if (ignored) {
@@ -95,7 +94,7 @@ int _vmprof_sample_stack(struct profbuf_s *p, PY_THREAD_STATE_T * tstate, uconte
     int depth;
     struct prof_stacktrace_s *st = (struct prof_stacktrace_s *)p->data;
     st->marker = MARKER_STACKTRACE;
-    st->count = 1;
+    st->sample_offset = vmp_get_time();
 #ifdef RPYTHON_VMPROF
     depth = get_stack_trace(get_vmprof_stack(), st->stack, MAX_STACK_DEPTH-1, (intptr_t)GetPC(uc));
 #else

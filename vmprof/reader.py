@@ -27,6 +27,7 @@ VERSION_MEMORY = 3
 VERSION_MODE_AWARE = 4
 VERSION_DURATION = 5
 VERSION_TIMESTAMP = 6
+VERSION_SAMPLE_TIMEOFFSET = 7
 
 PROFILE_MEMORY = 1
 PROFILE_LINES = 2
@@ -200,6 +201,9 @@ class LogReader(object):
         if PY3:
             return bytes.decode('utf-8')
         return bytes
+    
+    def read_double(self):
+        return struct.unpack('<d', self.fileobj.read(8))[0]
 
     def read_trace(self, depth):
         if self.state.profile_rpython:
@@ -266,9 +270,12 @@ class LogReader(object):
             elif marker == MARKER_TIME_N_ZONE:
                 s.start_time = self.read_time_and_zone()
             elif marker == MARKER_STACKTRACE:
-                count = self.read_word()
-                # for now
-                assert count == 1
+                if s.version >= VERSION_SAMPLE_TIMEOFFSET:
+                    time_offset = self.read_double()# seconds as double
+                else:
+                    count = self.read_word()
+                    time_offset = -1
+                    assert count == 1
                 depth = self.read_word()
                 assert depth <= 2**16, 'stack strace depth too high'
                 trace = self.read_trace(depth)

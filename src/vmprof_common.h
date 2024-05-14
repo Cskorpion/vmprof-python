@@ -13,6 +13,7 @@
 #include "vmprof_mt.h"
 #include <signal.h>
 #include <pthread.h>
+#include <stdio.h>
 #endif
 
 #ifdef VMPROF_UNIX
@@ -71,11 +72,14 @@ typedef struct prof_stacktrace_s {
     char padding[sizeof(long) - 1];
 #endif
     char marker;
-    long count, depth;
+    double sample_offset;
+    long depth;
     void *stack[];
 } prof_stacktrace_s;
 
-#define SIZEOF_PROF_STACKTRACE sizeof(long)+sizeof(long)+sizeof(char)
+double vmp_get_time();
+
+#define SIZEOF_PROF_STACKTRACE sizeof(double)+sizeof(long)+sizeof(char)
 
 RPY_EXTERN
 char *vmprof_init(int fd, double interval, int memory,
