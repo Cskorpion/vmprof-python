@@ -110,12 +110,14 @@ char *vmprof_init(int fd, double interval, int memory,
     return NULL;
 }
 
+#if VMPROF_UNIX
 double vmp_get_time() {
     double NS_PER_SEC = 1e9;
     struct timespec t;
     clock_gettime(CLOCK_MONOTONIC, &t);
     return (double) t.tv_sec + (double) t.tv_nsec / NS_PER_SEC;
 }
+#endif
 
 
 int opened_profile(const char *interp_name, int memory, int proflines, int native, int real_time)
@@ -143,7 +145,11 @@ int opened_profile(const char *interp_name, int memory, int proflines, int nativ
     }
     header.interp_name[0] = MARKER_HEADER;
     header.interp_name[1] = '\x00';
+#ifdef VMPROF_UNIX
     header.interp_name[2] = VERSION_SAMPLE_TIMEOFFSET;
+#else
+    header.interp_name[2] = VERSION_TIMESTAMP; // only for unix atm
+#endif
     header.interp_name[3] = memory*PROFILE_MEMORY + proflines*PROFILE_LINES + \
                             native*PROFILE_NATIVE + real_time*PROFILE_REAL_TIME;
 #ifdef RPYTHON_VMPROF
@@ -160,12 +166,15 @@ int opened_profile(const char *interp_name, int memory, int proflines, int nativ
     /* Write the time and the zone to the log file, profiling will start now */
     (void)vmp_write_time_now(MARKER_TIME_N_ZONE);
 
+#if VMPROF_UNIX
+    // Write start time and save for associating sample times with start time
     double start_time_offset = vmp_get_time();
-    char sto_s[50];
+    char sto_s[20];//??
 
     sprintf(sto_s, "%f", start_time_offset);//maybe there is a better way
     
     vmp_write_meta("start_time_offset", sto_s);
+#endif
 
     /* write some more meta information */
     vmp_write_meta("os", machine);
