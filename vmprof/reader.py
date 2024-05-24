@@ -286,7 +286,10 @@ class LogReader(object):
                 if s.profile_memory:
                     mem_in_kb = self.read_addr()
                 trace.reverse()
-                self.add_trace(trace, 1, thread_id, mem_in_kb)
+                if s.version >= VERSION_SAMPLE_TIMEOFFSET:
+                    self.add_trace(trace, time_offset, thread_id, mem_in_kb)
+                else:
+                    self.add_trace(trace, 1, thread_id, mem_in_kb)
             elif marker == MARKER_VIRTUAL_IP or marker == MARKER_NATIVE_SYMBOLS:
                 unique_id = self.read_addr()
                 name = self.read_string()

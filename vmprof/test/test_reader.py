@@ -1,9 +1,7 @@
-
+import os
 import struct, pytest
-from vmprof import reader
-from vmprof.reader import (FileReadError, MARKER_HEADER)
-from vmprof.test.test_run import (read_one_marker, read_header,
-        BufferTooSmallError, FileObjWrapper)
+from vmprof.reader import LogReader, LogReaderState, FdWrapper, VERSION_TIMESTAMP, VERSION_SAMPLE_TIMEOFFSET
+from vmprof.test.test_run import  BufferTooSmallError, FileObjWrapper
 
 class FileObj(object):
     def __init__(self, lst=None):
@@ -47,4 +45,50 @@ def test_fileobj_wrapper():
     assert fw.read(3) == b'123'
     assert fw.read(4) == b'4567'
     assert fw.read(2) == b'89'
+
+def test_no_timestamps_read_count():
+    path = os.path.dirname(os.path.abspath(__file__))
+    file_path = path + "/cpuburn.cpython.prof"
+    file = open(file_path) # find and open .prof file
+
+    fileobj = FdWrapper(file.fileno())
+    logreader = LogReader(fileobj, LogReaderState())
+    logreader.read_all() # read profile
+    file.close()
+
+    state = logreader.state
+
+    assert state.version <= VERSION_TIMESTAMP # VERSION_TIMESTAMP and prior versions do not support sample timestamps
+
+    assert type(state.profiles[0][1]) == int # timestamps are float
+    assert state.profiles[0][1] == 1
+    #...
+    assert type(state.profiles[-1][1]) == int
+    assert state.profiles[-1][1] == 1
+
+    assert "start_time_offset" not in state.meta # profiling start time
+
+def test_timestamps_read_offsets():
+    path = os.path.dirname(os.path.abspath(__file__))
+    file_path = path + "/cpuburn.cpython.tsprof"
+    file = open(file_path) # find and open .prof file
+
+    fileobj = FdWrapper(file.fileno())
+    logreader = LogReader(fileobj, LogReaderState())
+    logreader.read_all() # read profile
+    file.close()
+
+    state = logreader.state
+
+    assert state.version == VERSION_SAMPLE_TIMEOFFSET # This version supports sample timestamps
+
+    assert type(state.profiles[0][1]) == float # sample timestamps are float
+    assert state.profiles[0][1] == 451.370060965 # secs from CLOCK_MONOTONIC
+    #...
+    assert type(state.profiles[-1][1]) == float
+    assert state.profiles[-1][1] == 481.790013875
+
+    assert "start_time_offset" in state.meta
+    # profiling start time (recorded immediately after MARKER_TIME_N_ZONE start unix timestamp)
+    assert state.meta["start_time_offset"] == "451.359228"
 
