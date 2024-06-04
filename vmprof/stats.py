@@ -14,10 +14,12 @@ class Stats(object):
         if state:
             self.profile_lines = state.profile_lines
             self.profile_memory = state.profile_memory
+            self.profile_version = state.version # version of .prof file format
         else:
             # unknown, for tests only
             self.profile_lines = False
             self.profile_memory = False
+            self.profile_version = 0 # Base version
         self.generate_top()
         if jit_frames is None:
             jit_frames = set()
