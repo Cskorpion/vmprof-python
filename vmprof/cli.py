@@ -34,6 +34,13 @@ def build_argparser():
     )
 
     parser.add_argument(
+        '--allocation_sampling', '-as',
+        type=int,
+        default=0,
+        help='Sample every n bytes allocated'
+    )
+
+    parser.add_argument(
         '--web-auth',
         help='Authtoken for your acount on the server, works only when --web is used'
     )
