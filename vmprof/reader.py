@@ -18,6 +18,7 @@ MARKER_HEADER = b'\x05'
 MARKER_TIME_N_ZONE = b'\x06'
 MARKER_META = b'\x07'
 MARKER_NATIVE_SYMBOLS = b'\x08'
+MARKER_GC_STACKTRACE = b'\x09'
 
 
 VERSION_BASE = 0
@@ -270,6 +271,28 @@ class LogReader(object):
             elif marker == MARKER_TIME_N_ZONE:
                 s.start_time = self.read_time_and_zone()
             elif marker == MARKER_STACKTRACE:
+                if s.version >= VERSION_SAMPLE_TIMEOFFSET:
+                    time_offset = self.read_double()# seconds as double
+                else:
+                    count = self.read_word()
+                    time_offset = -1
+                    assert count == 1
+                depth = self.read_word()
+                assert depth <= 2**16, 'stack strace depth too high'
+                trace = self.read_trace(depth)
+                thread_id = 0
+                mem_in_kb = 0
+                if s.version >= VERSION_THREAD_ID:
+                    thread_id = self.read_addr()
+                if s.profile_memory:
+                    mem_in_kb = self.read_addr()
+                trace.reverse()
+                if s.version >= VERSION_SAMPLE_TIMEOFFSET:
+                    self.add_trace(trace, time_offset, thread_id, mem_in_kb)
+                else:
+                    self.add_trace(trace, 1, thread_id, mem_in_kb)
+            elif marker == MARKER_GC_STACKTRACE:
+                #print("gc stacktrace")
                 if s.version >= VERSION_SAMPLE_TIMEOFFSET:
                     time_offset = self.read_double()# seconds as double
                 else:

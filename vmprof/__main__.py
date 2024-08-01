@@ -48,11 +48,9 @@ def main():
         prof_file = tempfile.NamedTemporaryFile(delete=False)
         prof_name = prof_file.name
 
-    do_allocation_sampling = args.allocation_sampling != 0
-
     vmprof.enable(prof_file.fileno(), args.period, args.mem,
                   args.lines, native=native, 
-                  allocation_sampling=do_allocation_sampling, sample_n_bytes=args.allocation_sampling)
+                  sample_n_bytes=args.allocation_sampling)
     if args.jitlog and _jitlog:
         fd = os.open(prof_name + '.jit', os.O_WRONLY | os.O_TRUNC | os.O_CREAT)
         _jitlog.enable(fd)

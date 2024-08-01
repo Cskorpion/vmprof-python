@@ -55,7 +55,7 @@ def _is_native_enabled(native):
     return native
 
 if IS_PYPY:
-    def enable(fileno, period=DEFAULT_PERIOD, memory=False, lines=False, native=None, real_time=False, warn=True, allocation_sampling=False, sample_n_bytes=0):
+    def enable(fileno, period=DEFAULT_PERIOD, memory=False, lines=False, native=None, real_time=False, warn=True, sample_n_bytes=0):
         pypy_version_info = sys.pypy_version_info[:3]
         MAJOR = pypy_version_info[0]
         MINOR = pypy_version_info[1]
@@ -71,17 +71,24 @@ if IS_PYPY:
         native = _is_native_enabled(native)
         #
         if (MAJOR, MINOR, PATCH) >= (5, 9, 0):
-            if allocation_sampling:
-                _vmprof.enable_allocation_triggered(fileno, sample_n_bytes, memory, native, real_time)
+            if sample_n_bytes != 0:
+                _vmprof.enable_allocation_triggered(fileno, sample_n_bytes)
             else:
                 _vmprof.enable(fileno, period, memory, lines, native, real_time)
             return
         if real_time:
             raise ValueError('real_time=True requires PyPy >= 5.9')
         if MAJOR >= 5 and MINOR >= 8 and PATCH >= 0:
-            _vmprof.enable(fileno, period, memory, lines, native)
+            if sample_n_bytes != 0:
+                _vmprof.enable_allocation_triggered(fileno, sample_n_bytes)
+            else:
+                _vmprof.enable(fileno, period, memory, lines, native, real_time)
             return
-        _vmprof.enable(fileno, period)
+        if sample_n_bytes != 0:
+            _vmprof.enable_allocation_triggered(fileno, sample_n_bytes)
+        else:
+            _vmprof.enable(fileno, period)
+        return
 else:
     # CPYTHON
     def enable(fileno, period=DEFAULT_PERIOD, memory=False, lines=False, native=None, real_time=False):
