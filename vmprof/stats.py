@@ -5,9 +5,10 @@ class EmptyProfileFile(Exception):
     pass
 
 class Stats(object):
-    def __init__(self, profiles, adr_dict=None, jit_frames=None, interp=None,
+    def __init__(self, profiles, gc_profiles, adr_dict=None, jit_frames=None, interp=None,
                  meta=None, start_time=None, end_time=None, state=None):
         self.profiles = profiles
+        self.gc_profiles = gc_profiles
         self.adr_dict = adr_dict
         self.functions = {}
         # kludgy, state is optional. stats should only take state as input
@@ -65,16 +66,18 @@ class Stats(object):
         return [self._get_name(elem) for elem in prof]
 
     def generate_top(self):
-        for profile in self.profiles:
-            current_iter = {}
-            for i, addr in enumerate(profile[0]):
-                if self.profile_lines and i % 2 == 1:
-                    # this entry in the profile is a negative number indicating a line
-                    assert addr <= 0
-                    continue
-                if addr not in current_iter:  # count only topmost
-                    self.functions[addr] = self.functions.get(addr, 0) + 1
-                    current_iter[addr] = None
+        # quick hack to get gc profiles to print
+        for profiles in (self.profiles, self.gc_profiles):
+            for profile in profiles:
+                current_iter = {}
+                for i, addr in enumerate(profile[0]):
+                    if self.profile_lines and i % 2 == 1:
+                        # this entry in the profile is a negative number indicating a line
+                        assert addr <= 0
+                        continue
+                    if addr not in current_iter:  # count only topmost
+                        self.functions[addr] = self.functions.get(addr, 0) + 1
+                        current_iter[addr] = None
 
     def top_profile(self):
         return [(self._get_name(k), v) for (k, v) in six.iteritems(self.functions)]
@@ -118,12 +121,16 @@ class Stats(object):
         top.count = len(self.profiles)
         return top
 
-    def get_tree(self):
+    def get_tree(self, kind="gc"):
         # fine the first non-empty profile
 
-        top = self.get_top(self.profiles)
+        if kind == "gc" and self.gc_profiles:
+            profiles = self.gc_profiles
+        else:
+            profiles = self.profiles
+        top = self.get_top(profiles)
         addr = None
-        for profile in self.profiles:
+        for profile in profiles:
             last_addr = top.addr
             cur = top
             for i in range(0, len(profile[0])):

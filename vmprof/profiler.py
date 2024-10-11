@@ -44,7 +44,7 @@ def read_profile(prof_file):
 
     jit_frames = {}
     d = dict(state.virtual_ips)
-    s = Stats(state.profiles, d, jit_frames, interp=state.interp_name,
+    s = Stats(state.profiles, state.gc_profiles, d, jit_frames, interp=state.interp_name,
               start_time=state.start_time, end_time=state.end_time,
               meta=state.meta, state=state)
     return s

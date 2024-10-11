@@ -310,9 +310,9 @@ class LogReader(object):
                     mem_in_kb = self.read_addr()
                 trace.reverse()
                 if s.version >= VERSION_SAMPLE_TIMEOFFSET:
-                    self.add_trace(trace, time_offset, thread_id, mem_in_kb)
+                    self.add_gc_trace(trace, time_offset, thread_id, mem_in_kb)
                 else:
-                    self.add_trace(trace, 1, thread_id, mem_in_kb)
+                    self.add_gc_trace(trace, 1, thread_id, mem_in_kb)
             elif marker == MARKER_VIRTUAL_IP or marker == MARKER_NATIVE_SYMBOLS:
                 unique_id = self.read_addr()
                 name = self.read_string()
@@ -337,6 +337,9 @@ class LogReader(object):
 
     def add_trace(self, trace, trace_count, thread_id, mem_in_kb):
         self.state.profiles.append((trace, trace_count, thread_id, mem_in_kb))
+
+    def add_gc_trace(self, trace, timeoffset, thread_id, mem_in_kb):
+        self.state.gc_profiles.append((trace, timeoffset, thread_id, mem_in_kb))
 
 class LogReaderDumpNative(LogReader):
     def setup(self):
@@ -391,6 +394,7 @@ class LogReaderState(ReaderState):
     def __init__(self):
         self.virtual_ips = []
         self.profiles = []
+        self.gc_profiles = []
         self.interp_name = None
         self.start_time = None
         self.end_time = None
