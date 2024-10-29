@@ -35,6 +35,12 @@ class Stats(object):
             return 0 # old versions that do not emit start or end time
         ts = self.end_time - self.start_time
         return ts.total_seconds() * 1000000
+    
+    def get_runtime_in_microseconds_gc_sample_based(self):
+        if not self.gc_profiles:
+            return -7
+        time = self.gc_profiles[-1][1] - float(self.meta["start_time_offset"])
+        return time * 1000000
 
     def get_name(self, addr):
         if addr not in self.adr_dict:

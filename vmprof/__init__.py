@@ -33,9 +33,10 @@ def disable():
             if hasattr(_vmprof, 'stop_sampling'):
                 fileno = _vmprof.stop_sampling()
                 if fileno >= 0:
-                    # TODO does fileobj leak the fd? I dont think so, but need to check
+                    # TODO does fileobj leak the fd? I dont think so, but need to check (it does)
                     fileobj = FdWrapper(fileno)
                     l = LogReaderDumpNative(fileobj, LogReaderState())
+                    # read all necessary for resolving native func names
                     #l.read_all()
                     if hasattr(_vmprof, 'write_all_code_objects'):
                         _vmprof.write_all_code_objects(l.dedup)
@@ -62,6 +63,8 @@ if IS_PYPY:
         PATCH = pypy_version_info[2]
         if not isinstance(period, float):
             raise ValueError("period must be a float, not %s" % type(period))
+        if not isinstance(sample_n_bytes, int):
+            raise ValueError("sample_n_bytes must be a int, not %s" % type(period))
         if warn and pypy_version_info < (4, 1, 0):
             raise Exception("PyPy <4.1 have various kinds of bugs, pass warn=False if you know what you're doing")
         if warn and memory:
@@ -69,10 +72,12 @@ if IS_PYPY:
         if warn and lines:
             print('Line profiling is currently unsupported for PyPy. Running without lines statistics.\n')
         native = _is_native_enabled(native)
+        if period == 0.0 and sample_n_bytes == 0:
+            period = DEFAULT_PERIOD
         #
         if (MAJOR, MINOR, PATCH) >= (5, 9, 0):
             if sample_n_bytes != 0:
-                _vmprof.enable_allocation_triggered(fileno, sample_n_bytes, native)
+                _vmprof.enable_allocation_triggered(fileno, sample_n_bytes, period, native)
             else:
                 _vmprof.enable(fileno, period, memory, lines, native, real_time)
             return
@@ -80,12 +85,12 @@ if IS_PYPY:
             raise ValueError('real_time=True requires PyPy >= 5.9')
         if MAJOR >= 5 and MINOR >= 8 and PATCH >= 0:
             if sample_n_bytes != 0:
-                _vmprof.enable_allocation_triggered(fileno, sample_n_bytes, native)
+                _vmprof.enable_allocation_triggered(fileno, sample_n_bytes, period, native)
             else:
                 _vmprof.enable(fileno, period, memory, lines, native, real_time)
             return
         if sample_n_bytes != 0:
-            _vmprof.enable_allocation_triggered(fileno, sample_n_bytes, native)
+            _vmprof.enable_allocation_triggered(fileno, sample_n_bytes, period, native)
         else:
             _vmprof.enable(fileno, period)
         return

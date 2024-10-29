@@ -297,7 +297,7 @@ class LogReader(object):
                     time_offset = self.read_double()# seconds as double
                 else:
                     count = self.read_word()
-                    time_offset = -1
+                    time_offset = 1
                     assert count == 1
                 depth = self.read_word()
                 assert depth <= 2**16, 'stack strace depth too high'
