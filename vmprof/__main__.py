@@ -63,7 +63,7 @@ def main():
         if not isinstance(e, (KeyboardInterrupt, SystemExit)):
             raise
     #
-    vmprof.disable()
+    vmprof.disable(args.allocation_sampling, args.period)
     if args.jitlog and _jitlog:
         _jitlog.disable()
 

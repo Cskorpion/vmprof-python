@@ -29,7 +29,8 @@ def build_argparser():
     parser.add_argument(
         '--period', '-p',
         type=float,
-        default=0.00099,
+        #default=0.00099,
+        default=0.0,
         help='Sampling period (in seconds)'
     )
 
@@ -49,7 +50,7 @@ def build_argparser():
         '--web-url',
         metavar='url',
         default='http://vmprof.com',
-        help='Provide URL instead of the default vmprof.com)'
+        help='Provide URL instead of the default vmprof.com'
     )
     parser.add_argument(
         '--mem',

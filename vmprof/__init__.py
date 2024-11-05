@@ -26,7 +26,7 @@ IS_PYPY = '__pypy__' in sys.builtin_module_names
 # 1000Hz
 DEFAULT_PERIOD = 0.00099
 
-def disable():
+def disable(sample_allocated_bytes = 0, period = 0.0):
     try:
         # fish the file descriptor that is still open!
         try:
@@ -36,6 +36,8 @@ def disable():
                     # TODO does fileobj leak the fd? I dont think so, but need to check (it does)
                     fileobj = FdWrapper(fileno)
                     l = LogReaderDumpNative(fileobj, LogReaderState())
+                    l.write_meta("sample_allocated_bytes", str(sample_allocated_bytes))
+                    l.write_meta("period", str(period) if period != sample_allocated_bytes != 0 else str(DEFAULT_PERIOD))
                     # read all necessary for resolving native func names
                     #l.read_all()
                     if hasattr(_vmprof, 'write_all_code_objects'):

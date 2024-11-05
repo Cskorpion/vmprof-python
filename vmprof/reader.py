@@ -386,6 +386,21 @@ class LogReaderDumpNative(LogReader):
         for addr in trace:
             if addr not in self.dedup:
                 self.dedup.add(addr)
+    
+    def write_meta(self, key, value):
+        assert type(key) == str and type(value) == str, "key and value must be strings"
+
+        bytelist = [MARKER_META]
+
+        key.encode('utf-8')
+        value.encode('utf-8')
+
+        bytelist.append(struct.pack("l", len(key)))
+        bytelist.append(key)
+        bytelist.append(struct.pack("l", len(value)))
+        bytelist.append(value)
+
+        self.fileobj.write(b"".join(bytelist))
 
 class ReaderState(object):
     pass
