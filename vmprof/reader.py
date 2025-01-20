@@ -19,6 +19,7 @@ MARKER_TIME_N_ZONE = b'\x06'
 MARKER_META = b'\x07'
 MARKER_NATIVE_SYMBOLS = b'\x08'
 MARKER_GC_STACKTRACE = b'\x09'
+MARKER_OBJ_INFO_STACK =  b'\x0A'
 
 
 VERSION_BASE = 0
@@ -205,6 +206,12 @@ class LogReader(object):
     
     def read_double(self):
         return struct.unpack('<d', self.fileobj.read(8))[0]
+    
+    def read_obj_info(self, depth):
+        obj_info = []
+        for _ in range(depth):
+            obj_info.append(self.read_addr())
+        return obj_info
 
     def read_trace(self, depth):
         if self.state.profile_rpython:
@@ -292,7 +299,6 @@ class LogReader(object):
                 else:
                     self.add_trace(trace, 1, thread_id, mem_in_kb)
             elif marker == MARKER_GC_STACKTRACE:
-                #print("gc stacktrace")
                 if s.version >= VERSION_SAMPLE_TIMEOFFSET:
                     time_offset = self.read_double()# seconds as double
                 else:
@@ -313,6 +319,23 @@ class LogReader(object):
                     self.add_gc_trace(trace, time_offset, thread_id, mem_in_kb)
                 else:
                     self.add_gc_trace(trace, 1, thread_id, mem_in_kb)
+            elif marker == MARKER_OBJ_INFO_STACK:
+                if s.version >= VERSION_SAMPLE_TIMEOFFSET:
+                    time_offset = self.read_double()
+                else:
+                    count = self.read_word()
+                    time_offset = 1
+                    assert count == 1
+                depth = self.read_word()
+                print ("depth", depth)
+                assert depth <= 2**16, 'obj info stack depth too high'
+                obj_info_trace = self.read_obj_info(depth)
+                # list of rypthon_type_id << 1 | survived_last_minor_gc
+                obj_info_trace.reverse()
+                if s.version >= VERSION_SAMPLE_TIMEOFFSET:
+                    self.add_gc_obj_info(obj_info_trace, time_offset)
+                else:
+                    self.add_gc_obj_info(obj_info_trace, 1)
             elif marker == MARKER_VIRTUAL_IP or marker == MARKER_NATIVE_SYMBOLS:
                 unique_id = self.read_addr()
                 name = self.read_string()
@@ -340,6 +363,9 @@ class LogReader(object):
 
     def add_gc_trace(self, trace, timeoffset, thread_id, mem_in_kb):
         self.state.gc_profiles.append((trace, timeoffset, thread_id, mem_in_kb))
+    
+    def add_gc_obj_info(self, trace, timeoffset):
+        self.state.gc_obj_info.append((trace, timeoffset))
 
 class LogReaderDumpNative(LogReader):
     def setup(self):
@@ -410,6 +436,7 @@ class LogReaderState(ReaderState):
         self.virtual_ips = []
         self.profiles = []
         self.gc_profiles = []
+        self.gc_obj_info = []
         self.interp_name = None
         self.start_time = None
         self.end_time = None

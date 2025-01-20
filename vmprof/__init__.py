@@ -39,7 +39,7 @@ def disable(sample_allocated_bytes = 0, period = 0.0):
                     l.write_meta("sample_allocated_bytes", str(sample_allocated_bytes))
                     l.write_meta("period", str(period) if period != sample_allocated_bytes != 0 else str(DEFAULT_PERIOD))
                     # read all necessary for resolving native func names
-                    #l.read_all()
+                    l.read_all()
                     if hasattr(_vmprof, 'write_all_code_objects'):
                         _vmprof.write_all_code_objects(l.dedup)
         finally:

@@ -5,10 +5,11 @@ class EmptyProfileFile(Exception):
     pass
 
 class Stats(object):
-    def __init__(self, profiles, gc_profiles, adr_dict=None, jit_frames=None, interp=None,
+    def __init__(self, profiles, gc_profiles, gc_obj_info=None, adr_dict=None, jit_frames=None, interp=None,
                  meta=None, start_time=None, end_time=None, state=None):
         self.profiles = profiles
         self.gc_profiles = gc_profiles
+        self.gc_obj_info = gc_obj_info
         self.adr_dict = adr_dict
         self.functions = {}
         # kludgy, state is optional. stats should only take state as input

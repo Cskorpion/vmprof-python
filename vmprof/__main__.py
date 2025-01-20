@@ -49,7 +49,7 @@ def main():
         prof_name = prof_file.name
 
     vmprof.enable(prof_file.fileno(), args.period, args.mem,
-                  args.lines, native=native, 
+                  args.lines, native=native, real_time=True, 
                   sample_n_bytes=args.allocation_sampling)
     if args.jitlog and _jitlog:
         fd = os.open(prof_name + '.jit', os.O_WRONLY | os.O_TRUNC | os.O_CREAT)
