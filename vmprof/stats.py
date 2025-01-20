@@ -29,6 +29,7 @@ class Stats(object):
         self.meta = meta or {}
         self.start_time = start_time
         self.end_time = end_time
+        self.profile_version = state.version
 
     def get_runtime_in_microseconds(self):
         if self.start_time is None or self.end_time is None:
@@ -40,6 +41,16 @@ class Stats(object):
         if not self.gc_profiles:
             return -7
         time = self.gc_profiles[-1][1] - float(self.meta["start_time_offset"])
+        return time * 1000000
+    
+    def get_runtime_in_microseconds_sample_based(self):
+        if not self.gc_profiles:
+            last_stamp = self.profiles[-1][1]
+        elif not self.profiles:
+            last_stamp = self.gc_profiles[-1][1]
+        else:
+            last_stamp = self.gc_profiles[-1][1] if self.gc_profiles[-1][1] > self.profiles[-1][1] else self.profiles[-1][1] 
+        time = last_stamp - float(self.meta["start_time_offset"])
         return time * 1000000
 
     def get_name(self, addr):
