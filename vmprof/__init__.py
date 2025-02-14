@@ -42,6 +42,10 @@ def disable(sample_allocated_bytes = 0, period = 0.0):
                     l.read_all()
                     if hasattr(_vmprof, 'write_all_code_objects'):
                         _vmprof.write_all_code_objects(l.dedup)
+
+                    rpython_types = get_rpython_type_names()
+                    for rtid in rpython_types:
+                        l.write_meta("__rtype_" + str(rtid), rpython_types[rtid])
         finally:
             _vmprof.disable()
     except IOError as e:
@@ -56,6 +60,25 @@ def _is_native_enabled(native):
         if native is None:
             native = True
     return native
+
+def get_rpython_type_names():
+    if not '__pypy__' in sys.builtin_module_names: return {}
+    import gc, zlib
+    id_to_str = {}
+
+    lines = zlib.decompress(gc.get_typeids_z()).splitlines()
+    
+    for line in lines:
+        slines = str(line).split(" ")
+        if '?' in str(line):
+            id_to_str[int(slines[0][6:])] = " "
+        else:
+            id_to_str[int(slines[0][6:])] = line[6 + len(slines[0][6:]):]
+
+    del gc
+    del zlib
+
+    return id_to_str
 
 if IS_PYPY:
     def enable(fileno, period=DEFAULT_PERIOD, memory=False, lines=False, native=None, real_time=False, warn=True, sample_n_bytes=0):
