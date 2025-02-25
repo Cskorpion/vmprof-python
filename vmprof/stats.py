@@ -40,11 +40,13 @@ class Stats(object):
     
     def get_runtime_in_microseconds_gc_sample_based(self):
         if not self.gc_profiles:
-            return -7
+            return -1
         time = self.gc_profiles[-1][1] - float(self.meta["start_time_offset"])
         return time * 1000000
     
     def get_runtime_in_microseconds_sample_based(self):
+        if not "start_time_offset" in self.meta:
+            return -1
         if not self.gc_profiles:
             last_stamp = self.profiles[-1][1]
         elif not self.profiles:
