@@ -412,7 +412,12 @@ class LogReaderDumpNative(LogReader):
         for addr in trace:
             if addr not in self.dedup:
                 self.dedup.add(addr)
-    
+
+    def add_gc_trace(self, trace, time_offset, thread_id, mem_in_kb):
+        for addr in trace:
+            if addr not in self.dedup:
+                self.dedup.add(addr)
+        
     def write_meta(self, key, value):
         assert type(key) == str and type(value) == str, "key and value must be strings"
 
