@@ -327,10 +327,9 @@ class LogReader(object):
                     time_offset = 1
                     assert count == 1
                 depth = self.read_word()
-                print ("depth", depth)
                 assert depth <= 2**16, 'obj info stack depth too high'
                 obj_info_trace = self.read_obj_info(depth)
-                # list of rypthon_type_id << 1 | survived_last_minor_gc
+                # list of rypthon_type_id << 2 | external_malloced < 1 | survived_last_minor_gc
                 obj_info_trace.reverse()
                 if s.version >= VERSION_SAMPLE_TIMEOFFSET:
                     self.add_gc_obj_info(obj_info_trace, time_offset)

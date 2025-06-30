@@ -102,7 +102,7 @@ if IS_PYPY:
         #
         if (MAJOR, MINOR, PATCH) >= (5, 9, 0):
             if sample_n_bytes != 0:
-                _vmprof.enable_allocation_triggered(fileno, sample_n_bytes, period, native)
+                _vmprof.enable_allocation_triggered(fileno, sample_n_bytes, period, native, memory)
             else:
                 _vmprof.enable(fileno, period, memory, lines, native, real_time)
             return
@@ -110,12 +110,12 @@ if IS_PYPY:
             raise ValueError('real_time=True requires PyPy >= 5.9')
         if MAJOR >= 5 and MINOR >= 8 and PATCH >= 0:
             if sample_n_bytes != 0:
-                _vmprof.enable_allocation_triggered(fileno, sample_n_bytes, period, native)
+                _vmprof.enable_allocation_triggered(fileno, sample_n_bytes, period, native, memory)
             else:
                 _vmprof.enable(fileno, period, memory, lines, native, real_time)
             return
         if sample_n_bytes != 0:
-            _vmprof.enable_allocation_triggered(fileno, sample_n_bytes, period, native)
+            _vmprof.enable_allocation_triggered(fileno, sample_n_bytes, period, native, memory)
         else:
             _vmprof.enable(fileno, period)
         return
